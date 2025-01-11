@@ -1,173 +1,162 @@
-# REFERENCES : 
-# Class Slides for implementation of Stack class using Linked List data structure
-# W3C School for reference to string methods; particularly isdigit() method
+class Stack:
+    """
+    Implementation of stack data structure as a linked list
+    
+    Args:
+        value (int) (optional) : If not None, creates a stack with a single node with this value. Else, creates a empty stack
+    """
 
-class Stack :           # Implementation of Stack data structure using Linked List data structure
+    class _Node:
+        """
+        Represents an individual node in the stack
 
-    class _Node :       # Define private class Node to create a new node in the linked list
-        
-        def __init__(self , element , next) :
-            # Initialises the instance of Node class
-            # elements => Data stored
-            # next => Pointer to the address of next element in the list
-            
-            self._element = element     # Private property 'element' is defined
-            self._next =  next          # Private property 'next' is defined
+        Args:
+            element (int) : Value stored in the node
+            next (_Node) : Pointer to the node in the stack pushed just before
+        """
+        def __init__(self, value, next):            
+            self._value = value
+            self._next =  next
+            self._multiplier = 1     # Multiplier for the value computed in the inner level
+            self._distance = 0       # Distance travelled in this level
 
-    def __init__(self) :
-        # Initialises the instance of Stack class
+    def __init__(self, value=None):
+        self._head = None       # Pointer to the top of the stack
+        self._size = 0          # Length of stack
+        if value is not None:
+            self.push(value)
 
-        self._head = None       # Private property 'head' stores the data and pointer of the next element. Initially empty stack is created with no data
-        self._size = 0          # Private property 'size' is defined. Equal to length of stack (linked list)
+    def push(self , value):
+        """
+        Pushes a new node on top of the stack.
 
-    def push(self , e) :
-        # Adds a element 'e' to the top of the stack
-
-        self._head = self._Node(e , self._head)
+        Args:
+            value (int) : value stored in the new node
+        """
+        self._head = self._Node(value, self._head)
         self._size += 1
 
     def pop(self) :
-        # Deletes the topmost element of the stack and returns that element
+        """
+        Deletes the topmost node of the stack and returns its value
 
-        if self._size == 0:             # Cannot pop if the stack is empty. Therefore, raises an exception.
+        Returns:
+            tuple (int): value, multiplier and distance attributes of the top node of the stack
+        """
+        if self._size == 0:             # Cannot pop if the stack is empty.
             raise Exception('Stack is Empty')
         
-        answer = self._head._element
-
-        self._head = self._head._next       # The topmost element is now the second to topmost element in the original stack
+        value = self._head._value
+        distance = self._head._distance
+        multiplier = self._head._multiplier
+        self._head = self._head._next       # Change the head pointer to the second to top node
         self._size -= 1
+        return (value, multiplier, distance)
 
-        return answer
+    def top(self):
+        """
+        Access the multiplier stored in the top node of the stack.
 
-def findPositionandDistance(input_string):
-
-    # input_string => str : series of instruction along which the drone moves
-    # Output => list : list of length 4 containing the x, y, z co-ordinates and the distance travelled by the drone
-
-    # Algorithm :
-    # Treats each parenthesis as a level of instruction. Upon encountering '(' , creates a new level. Upon encountering ')', deletes the topmost level.
+        Returns:
+            tuple(int): value, multiplier and distance attributes of the top node of the stack
+        """
+        return (self._head._value, self._head._multiplier, self._head._distance)
     
-    number_stack = Stack()      # Initialises a stack to store the multiplier (number of times the instructions are repeated) of each level.
+    def modify_top(self, value=0, multiplier=1, distance=0):
+        """
+        Modifies the top element of the stack
+
+        Args:
+            value (int) : integer to be added to self._head._value
+            multiplier (int) : integer to be set as self._head._multiplier
+            distance (int) : integer to be added to self._head._distance
+        """
+        if self._size == 0:
+            raise Exception('Stack is empty')
+
+        self._head._value += value
+        self._head._multiplier = multiplier
+        self._head._distance += distance
+
+def findPositionandDistance(program):
+    """
+    Given a series of instructions to move the agent, computes the final co-ordinates of the agent
+
+    Args:
+        program (str) : series of instructions (format specified in ./Assignment_1.pdf) to move the agent
+
+    Returns:
+        tuple (int):
+            - The final x co-ordinate of the agent
+            - The final y co-ordinate of the agent
+            - The final z co-ordinate of the agent
+            - Distance travelled by the agent
+    """
+
+    # We store the instructions along each dimension in a separate stack
+    # Initialize each stack with 0 to represent the initial coordinates as (0, 0, 0)
+    x_stack, y_stack, z_stack = Stack(value=0), Stack(value=0), Stack(value=0)
+
+    stacks = {'X': x_stack,
+              'Y': y_stack,
+              'Z': z_stack
+            }
+    operations = {'-': -1, '+': 1}
     
-    x_stack = Stack()           # Initialises a stack to store the x co-ordinate of the drone.
-    x_stack.push(0)             # Creates the bottom-most level. The final value in this level is the final x co-ordinate
+    curr_operator = None        # Stores the latest operator encountered in the program
+    curr_multiplier = 0         # Stores the value of the multiplier for the next level
     
-    y_stack = Stack()           # Initialises a stack to store the y co-ordinate of the drone.
-    y_stack.push(0)             # Creates the bottom-most level. The final value in this level is the final y co-ordinate
-    
-    z_stack = Stack()           # Initialises a stack to store the z co-ordinate of the drone.
-    z_stack.push(0)             # Creates the bottom-most level. The final value in this level is the final z co-ordinate
-    
-    distance_stack = Stack()    # Initialises a stack to store the distance travelled by the drone
-    distance_stack.push(0)      # Creates the bottom-most level. The final value in this level is the total distance travelled
-
-    input_length = len(input_string)
-
-    i = 0     # Iterator to traverse the length of input string
-
-    while i < input_length :
-
-        character = input_string[i]
-
-        if character.isdigit() :        # isdigit() method checks whether the given string is composed entirely of digits from 0-9 or not
-            j = i+1
-            while input_string[j].isdigit() :       # Checks each character and combines the digits to form the multiplier number.
-                character = character + input_string[j]
-                j += 1
-            number_stack.push(int(character))
-
-            i = j
-            continue
-
-        elif character == '(' :          # Creates a new level in x, y, z and distance stack
+    program_idx = 0
+    while program_idx < len(program):
+        char = program[program_idx]
         
-            x_stack.push(0)
-            y_stack.push(0)
-            z_stack.push(0)
-            distance_stack.push(0)
-       
-            i += 1
-            continue
-
-        elif character == '+' :         # Signifies that one instruction is being given to the drone
-
-            if input_string[i+1] == 'X' :
-                temp = x_stack.pop()
-                temp += 1
-                x_stack.push(temp)
-            elif input_string[i+1] == 'Y' :
-                temp = y_stack.pop()
-                temp += 1
-                y_stack.push(temp)
-            elif input_string[i+1] == 'Z' :
-                temp = z_stack.pop()
-                temp += 1
-                z_stack.push(temp)
-            
-            temp_distance = distance_stack.pop()    # Irrespective of the direction of movement, the distance increments by 1 unit
-            temp_distance += 1
-            distance_stack.push(temp_distance)
-
-            i += 2
-            continue
+        if char == '-' or char == '+':
+            curr_operator = operations[char]
+            program_idx += 1
         
-        elif character == '-' :         # Signifies that one instruction is being given to the drone
+        elif char == 'X' or char == 'Y' or char =='Z':
+            # We add/subtract from the corresponding stack. Distance is increased by 1 in the corresponding stack
+            stacks[char].modify_top(value=curr_operator, distance=1)
+            program_idx += 1
+        
+        elif char.isdigit():
+            # We iterate till we have captured all the digits
+            while program[program_idx].isdigit():
+                curr_multiplier = curr_multiplier * 10 + int(program[program_idx])
+                program_idx += 1
+        
+        elif char == '(':
+            # Initialises a new level
+            for stack in stacks.values():
+                stack.modify_top(multiplier=curr_multiplier)
+                stack.push(value=0)
+            curr_multiplier = 0
+            program_idx += 1
+        
+        else:
+            # char is ')'
+            # Closes the current level. Modify the coordinates and distances in the previous level
+            for stack in stacks.values():
+                inner_value, _, inner_distance = stack.pop()
+                _, outer_multiplier, _ = stack.top()
+                stack.modify_top(value=(inner_value*outer_multiplier), multiplier=1, distance=(inner_distance*outer_multiplier))
+            curr_multiplier=0
+            program_idx += 1
 
-            if input_string[i+1] == 'X' :
-                temp = x_stack.pop()
-                temp -= 1
-                x_stack.push(temp)
-            elif input_string[i+1] == 'Y' :
-                temp = y_stack.pop()
-                temp -= 1
-                y_stack.push(temp)
-            elif input_string[i+1] == 'Z' :
-                temp = z_stack.pop()
-                temp -= 1
-                z_stack.push(temp)
-            
-            temp_distance = distance_stack.pop()    # Irrespective of the direction of movement, the distance increments by 1 unit
-            temp_distance += 1
-            distance_stack.push(temp_distance)
+    # The first level in the program remains in the stack
+    x_coordinate, _, x_distance = x_stack.pop()
+    y_coordinate, _, y_distance = y_stack.pop()
+    z_coordinate, _, z_distance = z_stack.pop()
+    total_distance = x_distance + y_distance + z_distance
 
-            i += 2
-            continue
+    return [x_coordinate, y_coordinate, z_coordinate, total_distance]
 
-        elif character == ')' :        # Signifies the end of the current level. Deletes the topmost level and store the result in the next level
-
-            multiplier = number_stack.pop()
-
-            # Top elements of each stack
-            x_stack_top = x_stack.pop()
-            y_stack_top = y_stack.pop()
-            z_stack_top = z_stack.pop()
-            distance_stack_top = distance_stack.pop()
-
-            # Final value of the current level
-            x_adder = multiplier * x_stack_top
-            y_adder = multiplier * y_stack_top
-            z_adder = multiplier * z_stack_top
-            distance_added = multiplier * distance_stack_top
-
-            # Value of the next to topmost level
-            x_stack_top = x_stack.pop()
-            y_stack_top = y_stack.pop()
-            z_stack_top = z_stack.pop()
-            distance_stack_top = distance_stack.pop()
-
-            # Value of the topmost level is added to the next level. Finishes the evaluation of the instruction of the topmost level
-            x_stack.push(x_stack_top + x_adder)
-            y_stack.push(y_stack_top + y_adder)
-            z_stack.push(z_stack_top + z_adder)
-            distance_stack.push(distance_stack_top + distance_added)
-
-            i += 1
-            continue
-
-    # Final value of the bottom-most level of stacks
-    x_coordinate = x_stack.pop()
-    y_coordinate = y_stack.pop()
-    z_coordinate = z_stack.pop()
-    distance = distance_stack.pop()
-
-    return [x_coordinate , y_coordinate , z_coordinate , distance]
+if __name__ == '__main__':
+    answers = []
+    with open('input.txt', 'r') as file:
+        for line in file:
+            program = line.strip()
+            answers.append(findPositionandDistance(program))
+    with open('output.txt', 'w') as file:
+        for answer in answers:
+            file.write(f"{answer}\n")
