@@ -1,6 +1,6 @@
 # Stacks
 This programming assignment is based on Stack data structure.
-We implement stack (built bottom-up) as a linked list of nodes. The methods in the class `Stack` allow modifications only to the topmost element.
+We implement stack as a linked list of nodes. The methods in the class `Stack` allow modifications only to the topmost element.
 
 ## I/O Format
 Here, a series of instructions is called a program.
@@ -15,15 +15,12 @@ A sample input-output pair is available in the respective files.
 2. There should not be any operator [`+` or `-`] just before a digit.
 3. An operator [`+` or `-`] must be followed by either `X`, `Y` or `Z`
 
-Examples of forbidden inputs are - 
-```
-X+Y-Z
-+X+2(Y+Z)
-X++Y-Z
-```
+Examples of forbidden inputs are - `X+Y-Z`, `+X+2(Y+Z)`, `X++Y-Z`
 
 ## Logic
-Each `()` in the program corresponds to a new level. This means that we must first compute the net movements in the inner level before proceeding with the instructions in the outer level.
+Each `()` in the program corresponds to a "level". A nested `()` means a new level. Let the first level be `0`. On encountering a nested `()`, we assign it a level `1` greater than the level corresponding to the outer brackets.
+
+This means that we must first compute the net movements in the higher level before proceeding with the instructions in the lower level.
 
 A stack is maintained for movements along each direction (x, y and z). Each node in the stack corresponds to one level of the program.
 
